@@ -1,9 +1,6 @@
 
 def parse(data):
-    out = []
-    for row in data.splitlines():
-        out.append([*map(int, row.split())])
-    return out
+    return [[int(x) for x in r.split()] for r in data.splitlines()]
 
 
 def part1(data):

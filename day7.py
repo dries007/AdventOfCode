@@ -54,8 +54,8 @@ def parse(data):
 def part1(data):
     root, nodes = parse(data)
 
-    print(root)
-    print(len(nodes), nodes)
+    # print(root)
+    # print(len(nodes), nodes)
 
     return root.name
 
@@ -63,8 +63,8 @@ def part1(data):
 def part2(data):
     root, nodes = parse(data)
 
-    print(root)
-    print(len(nodes), nodes)
+    # print(root)
+    # print(len(nodes), nodes)
 
     try:
         root.check_weight()

@@ -17,15 +17,23 @@ class Node:
 
     def use(self):
         self.root = False
-        print('Used', self.name)
         return self
 
     def solve(self, nodes):
         self.children = [nodes[x].use() for x in self.children]
-        # todo part 2: balance
-        # self.balanced = sum(map(lambda x: x.weight, self.children))
-        # if self.balanced != self.weight:
-        #     print("PART 2: ", self.balanced)
+
+    def check_weight(self):
+        if len(self.children) == 0:
+            return self.weight
+
+        l = [x.check_weight() for x in self.children]
+        s = set(l)
+        if len(s) != 1:
+            i1, i2 = s
+            i = i1 if l.count(i1) == 1 else i2
+            delta = (i1 - i2) if l.count(i1) == 1 else (i2 - i1)
+            raise Exception(repr(self.children[l.index(i)].weight - delta))
+        return sum(l) + self.weight
 
 
 def parse(data):
@@ -41,24 +49,31 @@ def parse(data):
             node.root = True
             return node, nodes
     raise Exception('No root?')
-    # return nodes
 
 
 def part1(data):
-    root, data = parse(data)
+    root, nodes = parse(data)
 
-    print(len(data), data)
     print(root)
+    print(len(nodes), nodes)
 
     return root.name
 
 
 def part2(data):
-    pass
+    root, nodes = parse(data)
+
+    print(root)
+    print(len(nodes), nodes)
+
+    try:
+        root.check_weight()
+    except Exception as e:
+        return e
 
 
 if __name__ == '__main__':
-    print("example1: ", part1('''pbga (66)
+    example_input = '''pbga (66)
 xhth (57)
 ebii (61)
 havc (66)
@@ -70,7 +85,9 @@ tknk (41) -> ugml, padx, fwft
 jptl (61)
 ugml (68) -> gyxo, ebii, jptl
 gyxo (61)
-cntj (57)'''))
+cntj (57)'''
+    print("example1: ", part1(example_input))
+    print("example2: ", part2(example_input))
 
     input_data = '''apcztdj (61)
 ulovosc (61) -> buzjgp, iimyluk

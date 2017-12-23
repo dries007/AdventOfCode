@@ -1,5 +1,6 @@
 import enum
 
+
 class Direction(enum.Enum):
     UP = (lambda x, y: (x, y - 1), '↑')
     LEFT = (lambda x, y: (x - 1, y), '←')

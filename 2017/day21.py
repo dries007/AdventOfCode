@@ -1,3 +1,6 @@
+# NOT FINISHED
+
+
 class Recipe:
     def __init__(self, recipe, result):
         self.result = [[c == '#' for c in x] for x in result.split('/')]

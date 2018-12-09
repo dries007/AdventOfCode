@@ -43,7 +43,7 @@ class Node:
         # return other + sum(self.metadata) + sum(self.children)
 
 
-def day7(inp):
+def day8(inp):
     inp = [*map(int, inp.split())]
     root = Node.parse(iter(inp))
     print(root)
@@ -51,5 +51,5 @@ def day7(inp):
 
 
 if __name__ == '__main__':
-    print(day7(example))
-    print(day7(input))
+    print(day8(example))
+    print(day8(input))

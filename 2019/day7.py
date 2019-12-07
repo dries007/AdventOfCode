@@ -2,12 +2,18 @@ import itertools
 
 
 def compute(mem, inp):
+    """
+    Intcode computation generator (yields output values, returns on halt)
+
+    mem must be a mutable list of memory.
+    inp must be a generator/iterator of inputs.
+    """
     def decode_mode():
         """
-        Decode parameter mode
+        Decode parameter mode for the current parameter. Increments parameter offset.
         """
         nonlocal offset
-        # get digit at index offset+1
+        # get digit (0-9) at index 'offset+1'. +1 to account for double digit opcodes.
         mode = (instr // (10 ** (offset + 1))) % 10
         val = mem[ip + offset]
         # print(f'decode {instr=} {offset=} {mode=} {val=}')
@@ -15,79 +21,73 @@ def compute(mem, inp):
         return mode, val
 
     def load():
-        # print('load')
+        """
+        Load next argument (based on offset).
+        Does all mode handling/offset increase.
+        """
         mode, parameter = decode_mode()
-        if mode == 0:
+        if mode == 0:  # address based load
             # print(f'load addr mode {parameter=} {mem[parameter]=}')
             return mem[parameter]
-        elif mode == 1:
+        elif mode == 1:  # immediate value load
             # print(f'load immediate {parameter=}')
             return parameter
         else:
             raise RuntimeError('impossible load mode')
 
     def store(value):
-        # print('store')
+        """
+        Store next argument (based on offset).
+        Does all mode handling/offset increase.
+        """
         mode, parameter = decode_mode()
-        if mode == 0:
+        if mode == 0:  # address based store
             # print(f'store addr mode mem[{parameter=}]<-{value=}')
             mem[parameter] = value
         else:
             raise RuntimeError('impossible store mode.')
 
-    # print('START', mem)
+    # Interpreter loop
     ip = 0
     while True:
-        instr = mem[ip]
-        opcode = instr % 100
-        offset = 1
+        instr = mem[ip]  # full instruction
+        opcode = instr % 100  # opcode only
+        offset = 1  # 1 because the first load/store should use the _next_ memory location instead of the current.
         # print(f'cycle {ip=} {instr=} {opcode=}')
-        if opcode == 99:
-            # print('Halt!')
-            break
-        elif opcode == 1:
-            # print('add')
+        if opcode == 99:  # halt
+            return
+        elif opcode == 1:  # add
             store(load() + load())
-        elif opcode == 2:
-            # print('mult')
+        elif opcode == 2:  # multiply
             store(load() * load())
-        elif opcode == 3:
-            # print('ld')
+        elif opcode == 3:   # read input (blocking)
             store(next(inp))
-        elif opcode == 4:
-            # print('st')
+        elif opcode == 4:  # write output (blocking)
             yield load()
-            # print('Output set', outp)
-        elif opcode == 5:
-            val = load()
-            ip_next = load()
-            if val != 0:
-                ip = ip_next
+        elif opcode == 5:  # jump if not zero
+            if load() != 0:
+                ip = load()
                 continue  # Skip autoincrement of ip
-        elif opcode == 6:
-            val = load()
-            ip_next = load()
-            if val == 0:
-                ip = ip_next
+            offset += 1   # jump over next argument
+        elif opcode == 6:  # jump if zero
+            if load() == 0:
+                ip = load()
                 continue  # Skip autoincrement of ip
-        elif opcode == 7:
+            offset += 1   # jump over next argument
+        elif opcode == 7:  # less than
             store(1 if load() < load() else 0)
-        elif opcode == 8:
+        elif opcode == 8:  # equal
             store(1 if load() == load() else 0)
         else:
             raise RuntimeError('Illegal opcode')
-
+        # jump over all used arguments
         ip += offset
-    # print('Halt')
-    # return mem
 
 
 def amplifiers1(mem, phases):
     signal = 0
     for phase in phases:
-        # print(f'Next amp {phase=} {signal=}')
         signal = next(compute(mem[:], iter((phase, signal))))
-    # print('Output ', signal)
     return signal
 
 
@@ -104,35 +104,38 @@ def part1(mem):
 
 
 def amplifiers2(mem, phases):
+    """
+    Generator recursion with feedback madness lies ahead!
+
+    Computation is done by creating a chain of generators, from last to first circuit.
+    The inputs to the Intcode machine is generator by the input_generator function.
+
+    This function creates the next Intcode machine with it's own input_generator...
+    The first circuit (the last in this generator chain) is special:
+    It first gets a bootstrap value (0) to get everything going, then it always
+    gets whatever the last circuit yielded in response. (feedback)
+    """
     feedback = None
 
     def input_generator(amp):
-        nonlocal feedback
+        yield phases[amp]  # fist input = phase setting
 
-        # fist input = phase setting
-        # print('yield phase', phases[amp], 'for amp', amp)
-        yield phases[amp]
-
-        if amp == 0:
-            # bootstrap
-            # print('yield bootstrap for amp', amp)
-            yield 0
-            # feedback
-            while True:
-                # print('yield feedback', feedback, 'for amp', amp)
+        if amp == 0:  # first amp is special
+            yield 0  # bootstrap input
+            while True:  # feedback from last amp
                 yield feedback
 
-        # more amps
-        # print('yield from next for amp', amp)
+        # Create more amps!
         yield from compute(mem[:], input_generator(amp - 1))
 
-    last = compute(mem[:], input_generator(len(phases)-1))
+    # back-to-front chain. The output of this is the output of the last amp.
+    chain = compute(mem[:], input_generator(len(phases)-1))
 
-    # Loop over all of the iterations of amplifier E and store it's output
-    for feedback in last:
+    # Loop over all of the iterations of amplifier E and store it's output as feedback.
+    # When the for loop ends, amp E has halted and returned it's last value.
+    for feedback in chain:
         pass
 
-    # print(feedback)
     return feedback
 
 

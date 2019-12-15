@@ -1,6 +1,5 @@
-import functools
 import math
-from collections import namedtuple, defaultdict
+from collections import defaultdict, namedtuple
 
 
 example1 = '''10 ORE => 10 A

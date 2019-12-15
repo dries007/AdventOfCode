@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 
 from day9 import compute, GrowingList
@@ -30,35 +29,53 @@ def play(inp):
         if x == 0:
             return ' '
         elif x == 1:
-            return '#'
+            return '█'
         elif x == 2:
             return '+'
         elif x == 3:
-            return '-'
+            return '▔'
         elif x == 4:
-            return '.'
+            return '●'
 
         return str(x)
 
     def draw():
         mx = max(x for x, y in screen.keys())
         my = max(y for x, y in screen.keys())
-        for y in range(my):
-            print(''.join(tile_char(screen[(x, y)]) for x in range(mx)))
+        for y in range(my+1):
+            print(''.join(tile_char(screen[(x, y)]) for x in range(mx+1)))
 
     def input():
         while True:
+            paddle = None
+            ball = None
+            for pos, tile in screen.items():
+                if tile == 3:
+                    paddle, _ = pos
+                if tile == 4:
+                    ball, _ = pos
+            # print(paddle, ball)
             draw()
-            yield 0
+            if paddle < ball:
+                yield 1
+            elif paddle > ball:
+                yield -1
+            else:
+                yield 0
 
     outp = compute(mem, input())
 
     screen = defaultdict(lambda: 0)
+    score = None
 
     for x in outp:
         y = next(outp)
         tile = next(outp)
-        screen[(x, y)] = tile
+        if x == -1 and y == 0:
+            score = tile
+            print('SCORE', score)
+        else:
+            screen[(x, y)] = tile
 
 
 if __name__ == '__main__':

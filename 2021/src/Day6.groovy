@@ -24,7 +24,7 @@ static def part1(String inp) {
 
 static def part2(String inp) {
     // "stroke of genius": Use list of nr of fishes of age x as "shift register"/"stack".
-    // Example >> 2^31
+    // Example >> 2^31 so use Long instead of Integer
     List<Long> fishes = inp.split(',').collect{Long.parseLong(it) }
     fishes = (0..8).collect{ fishes.count(it).longValue() }
     println("Init: ${fishes.sum()}")
